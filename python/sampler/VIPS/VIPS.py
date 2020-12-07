@@ -174,7 +174,7 @@ class VIPS:
                 after_weight_update = time()
                 if i % 10 == 0:
                     self.update_progress(i, 0)
-                self.do_plots(i, j)
+                #self.do_plots(i, j)
 
                 before_component_update = time()
                 self.vips_c.update_components(0,

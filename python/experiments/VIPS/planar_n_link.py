@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 from plotting.visualize_n_link import visualize_mixture
 from experiments.VIPS.configs.ConfigUtils import ConfigUtils
 
+
 class Planar_N_Link(AbstractVIPSExperiment):
     def __init__(self, num_dimensions, num_initial_components,
                  initial_mixture_prior_variance, cart_likelihood_var, conf_likelihood_var, config):
@@ -98,6 +99,7 @@ def run_on_cluster(num_dimensions, config_name, path_for_dumps, num_initial_comp
                             config=config)
 
     experiment.run_experiment()
+
 
 if __name__ == '__main__':
     import experiments.VIPS.configs.fast_adding_old_reusage as config

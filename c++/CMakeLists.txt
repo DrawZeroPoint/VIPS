@@ -18,9 +18,9 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
 execute_process(COMMAND swig -Wall -c++ -python VIPS_PythonWrapper.i WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 execute_process(COMMAND swig -Wall -c++ -python MMD.i WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 
-#include_directories(${PYTHON_INCLUDE_DIRS} ${CMAKE_CURRENT_SOURCE_DIR} ~/libs/armadillo/include ~/libs/OpenBlas/include ~/libs/nlopt/include /shared/apps/python/3.5.4/include/python3.5m /shared/apps/python/3.5.4/lib/python3.5/site-packages/numpy-1.13.1-py3.5-linux-x86_64.egg/numpy/core/include)
-include_directories(${PYTHON_INCLUDE_DIRS} ${CMAKE_CURRENT_SOURCE_DIR} ~/libs/armadillo/include ~/libs/OpenBlas/include ~/libs/nlopt/include)
-link_directories(~/libs/OpenBlas/lib ~/libs/nlopt/lib)
+#include_directories(${PYTHON_INCLUDE_DIRS} ${CMAKE_CURRENT_SOURCE_DIR} ~/Project_POE/libs/armadillo/include ~/Project_POE/libs/OpenBlas/include ~/Project_POE/libs/nlopt/include /shared/apps/python/3.5.4/include/python3.5m /shared/apps/python/3.5.4/lib/python3.5/site-packages/numpy-1.13.1-py3.5-linux-x86_64.egg/numpy/core/include)
+include_directories(${PYTHON_INCLUDE_DIRS} ${CMAKE_CURRENT_SOURCE_DIR} ~/Project_POE/libs/armadillo/include ~/Project_POE/libs/OpenBlas/include ~/Project_POE/libs/nlopt/include)
+link_directories(~/Project_POE/libs/OpenBlas/lib ~/Project_POE/libs/nlopt/lib)
 
 set(CMAKE_INSTALL_PREFIX "${CMAKE_CURRENT_SOURCE_DIR}/../")
 
