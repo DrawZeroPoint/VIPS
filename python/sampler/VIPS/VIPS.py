@@ -11,11 +11,13 @@ import os
 max_samples_for_residual = int(1e5)
 lowest_ll = -10 ** 10
 
+
 def my_nan_to_num(x):
     x = np.atleast_1d(x)
     x[np.where(np.isnan(x))] = lowest_ll
-    x = np.maximum(x,lowest_ll)
+    x = np.maximum(x, lowest_ll)
     return np.nan_to_num(x)
+
 
 class VIPS:
     def initialize_from_config(self, config):
@@ -45,7 +47,7 @@ class VIPS:
         self.max_components = self.config.LTS['max_components']
         self.sample_reuse_factor = self.config.LTS['sample_reuse_factor']
         self.use_KL_subsampling = self.config.LTS['use_KL_subsampling']
-        self.num_reused_samples  = self.config.LTS['num_reused_samples']
+        self.num_reused_samples = self.config.LTS['num_reused_samples']
         self.desired_num_eff_samples = self.config.LTS['desired_num_eff_samples']
         self.use_linesearch_new_covs = self.config.LTS['use_linesearch_for_new_covs']
         self.initialize_isotropic = self.config.LTS['initialize_new_covs_isotropic']
@@ -61,16 +63,15 @@ class VIPS:
         self.update_plots = self.config.FUNCTIONS['plot_fctn']
         self.plot_rate = self.config.PLOTTING['rate']
 
-
-
-
-    def __init__(self, num_dimensions, target_lnpdf, initial_mixture, config, groundtruth_samples=None, groundtruth_lnpdfs=None):
+    def __init__(self, num_dimensions, target_lnpdf, initial_mixture, config, groundtruth_samples=None,
+                 groundtruth_lnpdfs=None):
         self.initialize_from_config(config)
         self.target_lnpdf = target_lnpdf
         self.groundtruth_samples = groundtruth_samples
         self.groundtruth_likelihoods = groundtruth_lnpdfs
         self.num_dimensions = num_dimensions
-        self.vips_c = VIPS_PythonWrapper(num_dimensions, self.config.COMMON['num_threads'], self.min_kl_bound, self.max_kl_bound)
+        self.vips_c = VIPS_PythonWrapper(num_dimensions, self.config.COMMON['num_threads'], self.min_kl_bound,
+                                         self.max_kl_bound)
         self.progress = LearningProgress(self.num_dimensions)
 
         self.add_initial_components(initial_mixture)
@@ -85,31 +86,29 @@ class VIPS:
                      configWEIGHTOPT=self.config.WEIGHT_OPTIMIZATION,
                      )
 
-
     def learn_sampling(self):
-        ind=0
+        ind = 0
         for i in range(0, self.outer_iterations):
             num_components = len(self.vips_c.get_weights()[0])
             adding_components_start = time()
             # Add Components
             if (self.new_comps_to_add >= 0) and (i % self.comp_adding_rate == 0) \
                     and i > 0 and num_components < self.max_components:
-                    max_exploration_gain = self.exploration_gains[ind % len(self.exploration_gains)]
-                    ind+=1
+                max_exploration_gain = self.exploration_gains[ind % len(self.exploration_gains)]
+                ind += 1
 
-
-                    if self.use_linesearch_new_covs:
-                        self.vips_c.promote_samples_to_components(self.new_comps_to_add,
-                                                                  max_exploration_gain, 0,
-                                                                  False, max_samples_for_residual, True,
-                                                                  False)
-                        added_comps = len(self.vips_c.get_model()[0]) - num_components
-                        self.initialize_cov_for_new_comps(added_comps)
-                    else:
-                        self.vips_c.promote_samples_to_components(self.new_comps_to_add,
-                                                                  max_exploration_gain, 0,
-                                                                  False, max_samples_for_residual, True,
-                                                                  self.initialize_isotropic)
+                if self.use_linesearch_new_covs:
+                    self.vips_c.promote_samples_to_components(self.new_comps_to_add,
+                                                              max_exploration_gain, 0,
+                                                              False, max_samples_for_residual, True,
+                                                              False)
+                    added_comps = len(self.vips_c.get_model()[0]) - num_components
+                    self.initialize_cov_for_new_comps(added_comps)
+                else:
+                    self.vips_c.promote_samples_to_components(self.new_comps_to_add,
+                                                              max_exploration_gain, 0,
+                                                              False, max_samples_for_residual, True,
+                                                              self.initialize_isotropic)
 
             print("added components")
 
@@ -137,7 +136,7 @@ class VIPS:
                     num_new_samples = 0
             else:
                 # Sample uniformly from each component
-                weights = np.ones(num_components)/num_components
+                weights = np.ones(num_components) / num_components
                 num_new_samples = self.num_dimensions * num_components * self.new_samples_per_iter
             if num_new_samples != 0:
                 [new_samples, used_components] = self.vips_c.draw_samples_weights(num_new_samples, weights)
@@ -174,16 +173,16 @@ class VIPS:
                 after_weight_update = time()
                 if i % 10 == 0:
                     self.update_progress(i, 0)
-                #self.do_plots(i, j)
+                self.do_plots(i, j)
 
                 before_component_update = time()
                 self.vips_c.update_components(0,
-                                             self.ridge_for_MORE,
-                                             1000,
-                                             self.max_active_samples,
-                                             self.dont_learn_correlations,
-                                             self.dont_recompute_densities,
-                                             self.adapt_ridge_multipliers)
+                                              self.ridge_for_MORE,
+                                              1000,
+                                              self.max_active_samples,
+                                              self.dont_learn_correlations,
+                                              self.dont_recompute_densities,
+                                              self.adapt_ridge_multipliers)
                 after_component_update = time()
 
                 print("updating weights took " + "%0.2f" % (after_weight_update - before_weight_update))
@@ -191,8 +190,7 @@ class VIPS:
                 self.dump_gmm(i)
 
         if self.progress_rate > 0:
-            np.savez(self.progress_path + "result",
-                     progress=self.progress)
+            np.savez(self.progress_path + "_result", progress=self.progress)
         print("done")
 
     def initialize_cov_for_new_comps(self, added_comps):
@@ -249,13 +247,14 @@ class VIPS:
             self.mmd = MMD(self.groundtruth_samples)
             self.mmd.set_kernel(self.mmd_alpha)
             if self.groundtruth_likelihoods is None:
-                self.groundtruth_likelihoods = np.array([my_nan_to_num(self.target_lnpdf(sample)) for sample in self.groundtruth_samples]).reshape(-1)
+                self.groundtruth_likelihoods = np.array(
+                    [my_nan_to_num(self.target_lnpdf(sample)) for sample in self.groundtruth_samples]).reshape(-1)
             self.progress.set_groundtruth_likelihoods(self.groundtruth_likelihoods)
         else:
             self.mmd = None
 
     def update_progress(self, sampling_iteration, EM_iteration):
-        #self.progress.add_mixture_entropy(self.vips_c.get_entropy_estimate_on_active_samples())
+        # self.progress.add_mixture_entropy(self.vips_c.get_entropy_estimate_on_active_samples())
         [self.progress.num_samples, self.progress.num_samples_total] = self.vips_c.get_num_samples()
         # add timestamp
         self.progress.add_timestamp(time())
@@ -263,14 +262,15 @@ class VIPS:
         [weights, _] = self.vips_c.get_weights()
         self.progress.add_weights(weights)
         # add expected rewards and expected target_densities
-        [expected_rewards, expected_target_densities, comp_etd_history, comp_reward_history] = self.vips_c.get_expected_rewards()
+        [expected_rewards, expected_target_densities, comp_etd_history,
+         comp_reward_history] = self.vips_c.get_expected_rewards()
         self.progress.comp_reward_history = comp_reward_history
         # add number of components
         self.progress.add_num_components(int(len(weights)))
         # add mixture densities on groundtruth
         if self.groundtruth_samples is not None:
             if ((self.mmd_rate > 0)
-                and ((sampling_iteration * self.em_iterations) % self.mmd_rate == 0)):
+                    and ((sampling_iteration * self.em_iterations) % self.mmd_rate == 0)):
                 mmd = 0
                 for i in range(self.config.COMMON['num_mmd_evals']):
                     test_samples = self.vips_c.draw_samples(2000, 1)[0]
@@ -283,13 +283,13 @@ class VIPS:
             [weights, means, covs] = self.vips_c.get_model()
             self.gmm_dump_timesteps.append(time() - self.start)
             np.savez(self.path_for_gmm_dumps + 'gmm_dump_' + str(i), weights=weights, means=means, covs=covs,
-                     timestamps=self.gmm_dump_timesteps, fevals=self.progress.num_feval[-1], active_samples=self.vips_c.get_debug_info()[9],
-                     num_comps=self.progress.num_components, reward_hist=self.progress.comp_reward_history, num_sample_hist=self.vips_c.get_debug_info()[10].T)
+                     timestamps=self.gmm_dump_timesteps, fevals=self.progress.num_feval[-1],
+                     active_samples=self.vips_c.get_debug_info()[9],
+                     num_comps=self.progress.num_components, reward_hist=self.progress.comp_reward_history,
+                     num_sample_hist=self.vips_c.get_debug_info()[10].T)
 
     def do_plots(self, sampling_iteration, EM_iteration):
         if self.plot_rate > 0 and ((self.update_plots is not None)
-                and ((sampling_iteration * self.em_iterations + EM_iteration) % self.plot_rate == 0)):
+                                   and ((
+                                                sampling_iteration * self.em_iterations + EM_iteration) % self.plot_rate == 0)):
             self.update_plots(self)
-
-
-

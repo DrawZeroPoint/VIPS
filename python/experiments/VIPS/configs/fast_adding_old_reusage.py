@@ -2,7 +2,7 @@ from plotting.default_plot import default_plots
 
 COMMON = {
     # number of threads to use
-    'num_threads': 1,
+    'num_threads': 8,
 
     # groundtruth sample set for evaluations
     'groundtruth_samples': None,
@@ -35,14 +35,14 @@ COMMON = {
 # Hyperparameters of the Learn-To-Sample algorithm
 LTS = {
     # Integer storing the maximum number of allowed components
-    'max_components': 10000,
+    'max_components': 50,
 
     # upper bounds on the bonus for staying away from the current mixture when adding a new component
     # the bounds are specified as a list, which gets cycled through
     'max_exploration_gains': [1000, 500, 200, 100, 50],
 
     # each outer iterations consists of 1) sampling, 2) updating the component weights, 3) updating the components
-    'outer_iterations': 1000,
+    'outer_iterations': 30,
 
     # defines how often to alternate between 2) and 3) after each sampling step
     'iterations_for_mixture_updates': 1,
