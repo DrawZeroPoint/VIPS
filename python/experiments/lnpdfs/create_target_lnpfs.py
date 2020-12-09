@@ -1,5 +1,6 @@
 import numpy as np
 from experiments.GMM import GMM
+from robotics.kinematics import fk_in_space
 from scipy.stats import multivariate_normal as normal_pdf
 
 import os
@@ -58,6 +59,59 @@ def build_GMM_lnpdf_autograd(num_dimensions, num_true_components):
 
         target_lnpdf.counter = 0
     return [target_lnpdf, means, covs]
+
+
+# Dong: Panda Arm experiments
+def build_target_likelihood_panda_arm_xyz(num_dimensions, prior_variance, likelihood_variance):
+    """
+    :param num_dimensions: int, equals to n
+    :param prior_variance: ndarray, [n,] variance of the input's Gaussian
+    :param likelihood_variance: target distribution variance
+    """
+    prior = normal_pdf(np.zeros(num_dimensions), prior_variance * np.eye(num_dimensions))
+    prior_chol = np.sqrt(prior_variance) * np.eye(num_dimensions)
+    """Dong
+    Set positional target (x,y,z), orientation is not cared
+    """
+    likelihood = normal_pdf([0.5, 0, 0.5], likelihood_variance * np.eye(3))
+
+    def target_lnpdf(theta, without_prior=False):
+        theta = np.atleast_2d(theta)
+        target_lnpdf.counter += len(theta)
+
+        """Dong
+        Plugin the forward kinematics of the panda arm here
+        """
+        x = np.zeros((len(theta)))
+        y = np.zeros((len(theta)))
+        z = np.zeros((len(theta)))
+        M = np.array([
+            [1, 0, 0, 0.088],
+            [0, -1, 0, 0],
+            [0, 0, -1, 0.926],
+            [0, 0, 0, 1],
+        ])
+        screw_axes = np.array([
+            [0, 0, 1, 0, 0, 0],
+            [0, 1, 0, -0.333, 0, 0],
+            [0, 0, 1, 0, 0, 0],
+            [0, -1, 0, 0.649, 0, -0.088],
+            [0, 0, 1, 0, 0, 0],
+            [0, -1, 0, 1.033, 0, 0],
+            [0, 0, -1, 0, 0.088, 0],
+        ]).T
+        for k in range(len(theta)):
+            pose = fk_in_space(M, screw_axes, theta[k])
+            x[k] = pose[0, 3]
+            y[k] = pose[1, 3]
+            z[k] = pose[2, 3]
+        if without_prior:
+            return np.squeeze(likelihood.logpdf(np.vstack((x, y, z)).transpose()))
+        else:
+            return np.squeeze(prior.logpdf(theta) + likelihood.logpdf(np.vstack((x, y, z)).transpose()))
+
+    target_lnpdf.counter = 0
+    return [target_lnpdf, prior, prior_chol]
 
 
 # Planar-N-Link experiment

@@ -189,6 +189,7 @@ class VIPS:
                 print("updating components took " + "%0.2f" % (after_component_update - before_component_update))
                 self.dump_gmm(i)
 
+        m = self.vips_c.get_model()
         if self.progress_rate > 0:
             np.savez(self.progress_path + "_result", progress=self.progress)
         print("done")
