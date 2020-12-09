@@ -9,14 +9,19 @@ import matplotlib.pyplot as plt
 from plotting.visualize_n_link import visualize_mixture
 from experiments.VIPS.configs.ConfigUtils import ConfigUtils
 
+
 class Planar_N_Link(AbstractVIPSExperiment):
     def __init__(self, num_dimensions, num_initial_components,
                  initial_mixture_prior_variance, cart_likelihood_var, conf_likelihood_var, config):
         self.cart_likelihood_var = cart_likelihood_var
         self.conf_likelihood_var = conf_likelihood_var
-        filepath = "planar_n_link/" + str(num_dimensions) + '/' + datetime.datetime.now().strftime("%Y-%m-%d_%H%M%S")+'/'
-        AbstractVIPSExperiment.__init__(self, filepath, num_dimensions, num_initial_components, initial_mixture_prior_variance)
-        [self.target_lnpdf, self.prior, self.prior_chol] = build_target_likelihood_planar_n_link_4(num_dimensions, conf_likelihood_var, cart_likelihood_var)
+        filepath = "planar_n_link/" + str(num_dimensions) + '/' + datetime.datetime.now().strftime(
+            "%Y-%m-%d_%H%M%S") + '/'
+        AbstractVIPSExperiment.__init__(self, filepath, num_dimensions, num_initial_components,
+                                        initial_mixture_prior_variance)
+        [self.target_lnpdf, self.prior, self.prior_chol] = build_target_likelihood_planar_n_link_4(num_dimensions,
+                                                                                                   conf_likelihood_var,
+                                                                                                   cart_likelihood_var)
         self.groundtruth_samples = None
         self.groundtruth_lnpdfs = None
         self.config = config
@@ -28,20 +33,25 @@ class Planar_N_Link(AbstractVIPSExperiment):
             [weights, means, _] = sampler.vips_c.get_model()
             visualize_mixture(weights, means)
             default_plots(sampler)
+
         changes_in_functions = {
             'plot_fctn': all_plots,
         }
         ConfigUtils.merge_FUNCTIONS(config, changes_in_functions)
 
     def obtain_groundtruth(self):
-        self.groundtruth_samples = np.load(self.data_path+'groundtruth/10link_4/samples_10link4_180kof200M.npy')[:,::18,:].reshape((-1,10)).copy()
-        self.groundtruth_lnpdfs = np.load(self.data_path+'groundtruth/10link_4/lnpdfs_10link4_180kof200M.npy')[:,::18].flatten().copy()
+        self.groundtruth_samples = np.load(self.data_path + 'groundtruth/10link_4/samples_10link4_180kof200M.npy')[:,
+                                   ::18, :].reshape((-1, 10)).copy()
+        self.groundtruth_lnpdfs = np.load(self.data_path + 'groundtruth/10link_4/lnpdfs_10link4_180kof200M.npy')[:,
+                                  ::18].flatten().copy()
 
     def run_experiment(self):
         self.run_experiment_VIPS(self.target_lnpdf, self.config, self.groundtruth_samples, self.groundtruth_lnpdfs)
 
 
-def run_on_cluster(num_dimensions, config_name, path_for_dumps, rate_of_dumps=100, num_threads=1, num_initial_components=1, outer_iters=1000, old_cov_init=None,  isotropic=None, adding_rate=None, adapt_ridge=None, ridge_coeff=None, fixedKL=None, des_num_eff=None):
+def run_on_cluster(num_dimensions, config_name, path_for_dumps, rate_of_dumps=100, num_threads=1,
+                   num_initial_components=1, outer_iters=1000, old_cov_init=None, isotropic=None, adding_rate=None,
+                   adapt_ridge=None, ridge_coeff=None, fixedKL=None, des_num_eff=None):
     if config_name is 'default':
         import experiments.VIPS.configs.default as config
     elif config_name is 'fast_adding':
@@ -79,13 +89,14 @@ def run_on_cluster(num_dimensions, config_name, path_for_dumps, rate_of_dumps=10
     cart_likelihood_var = np.array([1e-4, 1e-4])
 
     experiment = Planar_N_Link(num_dimensions=num_dimensions,
-                            num_initial_components=num_initial_components,
-                            initial_mixture_prior_variance=conf_likelihood_var,
-                            cart_likelihood_var=cart_likelihood_var,
-                            conf_likelihood_var=conf_likelihood_var,
-                            config=config)
+                               num_initial_components=num_initial_components,
+                               initial_mixture_prior_variance=conf_likelihood_var,
+                               cart_likelihood_var=cart_likelihood_var,
+                               conf_likelihood_var=conf_likelihood_var,
+                               config=config)
 
     experiment.run_experiment()
+
 
 if __name__ == '__main__':
     import experiments.VIPS.configs.fast_adding as config
@@ -97,11 +108,11 @@ if __name__ == '__main__':
     cart_likelihood_var = np.array([1e-4, 1e-4])
 
     experiment = Planar_N_Link(num_dimensions=num_dimensions,
-                            num_initial_components=100,
-                            initial_mixture_prior_variance=conf_likelihood_var,
-                            cart_likelihood_var=cart_likelihood_var,
-                            conf_likelihood_var=conf_likelihood_var,
-                            config=config)
+                               num_initial_components=100,
+                               initial_mixture_prior_variance=conf_likelihood_var,
+                               cart_likelihood_var=cart_likelihood_var,
+                               conf_likelihood_var=conf_likelihood_var,
+                               config=config)
     experiment.obtain_groundtruth()
     experiment.enable_progress_logging(config, 5)
     experiment.run_experiment()

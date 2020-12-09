@@ -69,7 +69,15 @@ def build_target_likelihood_planar_n_link(num_dimensions, prior_variance, likeli
     """
     prior = normal_pdf(np.zeros(num_dimensions), prior_variance * np.eye(num_dimensions))
     prior_chol = np.sqrt(prior_variance) * np.eye(num_dimensions)
-    likelihood = normal_pdf([0.7 * num_dimensions, 0], likelihood_variance * np.eye(2))
+    """Dong
+    The following likelihood represents the target distribution. Since the problem is making
+    the tip of the n-link points to a target in 2D plane, the target point (x,y) ~ N(mu, var),
+    here mu=[2.1, 0], i.e. x=2.1, 7=0. We can also set (x,y) be other values.
+    """
+    likelihood = normal_pdf([0.7 * num_dimensions, -1.67], likelihood_variance * np.eye(2))
+    """Dong
+    l is the length array, all links' length are set as 1
+    """
     l = np.ones(num_dimensions)
 
     def target_lnpdf(theta, without_prior=False):

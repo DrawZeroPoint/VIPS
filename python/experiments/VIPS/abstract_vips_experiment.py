@@ -10,10 +10,12 @@ from sampler.VIPS.VIPS import VIPS
 class AbstractVIPSExperiment(AbstractExperiment):
     def __init__(self, filepath, num_dimensions, num_initial_components, initial_mixture_prior_variance):
         AbstractExperiment.__init__(self, filepath, num_dimensions)
-        self.initial_mixture = self.construct_initial_mixture(num_dimensions, num_initial_components, initial_mixture_prior_variance)
+        self.initial_mixture = self.construct_initial_mixture(num_dimensions, num_initial_components,
+                                                              initial_mixture_prior_variance)
 
     def run_experiment_VIPS(self, target_lnpdf, config, groundtruth_samples = None, groundtruth_lnpdfs=None):
-        self.sampler = VIPS(self.num_dimensions, target_lnpdf, self.initial_mixture, config, groundtruth_samples, groundtruth_lnpdfs)
+        self.sampler = VIPS(self.num_dimensions, target_lnpdf, self.initial_mixture, config,
+                            groundtruth_samples, groundtruth_lnpdfs)
         self.sampler.learn_sampling()
 
     def load_initial_mixture_from_file(self, filename):

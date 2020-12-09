@@ -55,9 +55,20 @@ class Planar_N_Link(AbstractVIPSExperiment):
                 cart_likelihood_var == np.array([1e-4, 1e-4]))):
             self.groundtruth_samples = np.load(self.data_path + "groundtruth/3link/samples_after_10kburnin_1152thinning.npy")
             """Dong
-            Use only 100 samples instead of 20000 samples could yield similar result
+            Use only 100 samples instead of 20000 samples could yield similar result for a 3-link robot
             """
-            self.groundtruth_samples = self.groundtruth_samples[:30]
+            # self.groundtruth_samples = self.groundtruth_samples[10000:10030]
+            # y = np.zeros(30)
+            # x = np.zeros(30)
+            # for i in range(3):
+            #     y += [i] * np.sin(np.sum(self.groundtruth_samples[:, :i + 1], 1))
+            #     x += [i] * np.cos(np.sum(self.groundtruth_samples[:, :i + 1], 1))
+            # print(x)
+            # print(y)
+            """Dong
+            These groundtruth_lnpdf is the log likelihood of all samples under the given distributions
+            (log-prior + log-target)
+            """
             self.groundtruth_lnpdfs = self.target_lnpdf(self.groundtruth_samples)
 
     def run_experiment(self):

@@ -289,7 +289,5 @@ class VIPS:
                      num_sample_hist=self.vips_c.get_debug_info()[10].T)
 
     def do_plots(self, sampling_iteration, EM_iteration):
-        if self.plot_rate > 0 and ((self.update_plots is not None)
-                                   and ((
-                                                sampling_iteration * self.em_iterations + EM_iteration) % self.plot_rate == 0)):
+        if self.plot_rate > 0 and ((self.update_plots is not None) and ((sampling_iteration * self.em_iterations + EM_iteration) % self.plot_rate == 0)):
             self.update_plots(self)
