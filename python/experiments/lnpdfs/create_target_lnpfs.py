@@ -1,12 +1,34 @@
 import numpy as np
 from experiments.GMM import GMM
-from robotics.kinematics import fk_in_space
+from robotics.kinematics import fk_in_space, jacobian_space
+from robotics.transform import quaternion_from_matrix
 from scipy.stats import multivariate_normal as normal_pdf
 
 import os
 
 file_path = os.path.dirname(os.path.realpath(__file__))
 data_path = os.path.abspath(os.path.join(file_path, os.pardir, os.pardir, os.pardir)) + "/data/"
+
+
+class Panda:
+    def __init__(self):
+        pass
+
+    M = np.array([
+        [1, 0, 0, 0.088],
+        [0, -1, 0, 0],
+        [0, 0, -1, 0.926],
+        [0, 0, 0, 1],
+    ])
+    screw_axes = np.array([
+        [0, 0, 1, 0, 0, 0],
+        [0, 1, 0, -0.333, 0, 0],
+        [0, 0, 1, 0, 0, 0],
+        [0, -1, 0, 0.649, 0, -0.088],
+        [0, 0, 1, 0, 0, 0],
+        [0, -1, 0, 1.033, 0, 0],
+        [0, 0, -1, 0, 0.088, 0],
+    ]).T
 
 
 ### Gaussian Mixture Model experiment
@@ -82,29 +104,7 @@ def build_target_likelihood_panda_arm_xyz(num_dimensions, prior_variance, likeli
         """Dong
         Plugin the forward kinematics of the panda arm here
         """
-        x = np.zeros((len(theta)))
-        y = np.zeros((len(theta)))
-        z = np.zeros((len(theta)))
-        M = np.array([
-            [1, 0, 0, 0.088],
-            [0, -1, 0, 0],
-            [0, 0, -1, 0.926],
-            [0, 0, 0, 1],
-        ])
-        screw_axes = np.array([
-            [0, 0, 1, 0, 0, 0],
-            [0, 1, 0, -0.333, 0, 0],
-            [0, 0, 1, 0, 0, 0],
-            [0, -1, 0, 0.649, 0, -0.088],
-            [0, 0, 1, 0, 0, 0],
-            [0, -1, 0, 1.033, 0, 0],
-            [0, 0, -1, 0, 0.088, 0],
-        ]).T
-        for k in range(len(theta)):
-            pose = fk_in_space(M, screw_axes, theta[k])
-            x[k] = pose[0, 3]
-            y[k] = pose[1, 3]
-            z[k] = pose[2, 3]
+        x, y, z, _, _, _, _ = panda_fk(theta)
         if without_prior:
             return np.squeeze(likelihood.logpdf(np.vstack((x, y, z)).transpose()))
         else:
@@ -112,6 +112,96 @@ def build_target_likelihood_panda_arm_xyz(num_dimensions, prior_variance, likeli
 
     target_lnpdf.counter = 0
     return [target_lnpdf, prior, prior_chol]
+
+
+def build_target_likelihood_panda_arm_waiter(num_dimensions, prior_variance, likelihood_variance):
+    """
+    :param num_dimensions: int, equals to n
+    :param prior_variance: ndarray, [n,] variance of the input's Gaussian
+    :param likelihood_variance: target distribution variance
+    """
+    """Dong
+    Set the theta prior properly will prevent the result break the joint position limit
+    """
+    prior_means = np.zeros(num_dimensions)
+    prior_means[3] = -np.pi * 0.5
+    prior = normal_pdf(prior_means, prior_variance * np.eye(num_dimensions))
+    prior_chol = np.sqrt(prior_variance) * np.eye(num_dimensions)
+    """Dong
+    Set both orientation and position targets, where orientation has the highest priority.
+    TCP reach 2 specific positions in demonstration (10 samples for each position)
+    """
+    likelihood = normal_pdf([0.5, -0.3, 0.5, 1, 0, 0, 0], likelihood_variance * np.eye(7))
+
+    def target_lnpdf(theta, without_prior=False):
+        theta = np.atleast_2d(theta)
+        target_lnpdf.counter += len(theta)
+
+        """Dong
+        Plugin the forward kinematics of the panda arm here
+        """
+        x, y, z, qx, qy, qz, qw = panda_fk(theta)
+        # J, J_pinv, N = panda_jacobian(theta)
+
+        # H1 = []
+        # H2 = []
+        # for k in range(len(J)):
+        #     temp = likelihood.logpdf(np.vstack((x, y, z, qx, qy, qz, qw)).transpose())
+        #     h1 = np.dot(temp, J[k])
+        #     h2 = np.dot(h1, N[k])
+        #     H1.append(h1)
+        #     H2.append(h2)
+        # H1 = np.asarray(H1)
+        # H2 = np.asarray(H2)
+        if without_prior:
+            return np.squeeze(likelihood.logpdf(np.vstack((x, y, z, qx, qy, qz, qw)).transpose()))
+        else:
+            return np.squeeze(prior.logpdf(theta) + likelihood.logpdf(np.vstack((x, y, z, qx, qy, qz, qw)).transpose()))
+
+    target_lnpdf.counter = 0
+    return [target_lnpdf, prior, prior_chol]
+
+
+def panda_fk(thetas):
+    thetas = np.atleast_2d(thetas)
+    n = len(thetas)
+    x = np.zeros(n)
+    y = np.zeros(n)
+    z = np.zeros(n)
+    qx = np.zeros(n)
+    qy = np.zeros(n)
+    qz = np.zeros(n)
+    qw = np.zeros(n)
+
+    for k in range(n):
+        pose = fk_in_space(Panda.M, Panda.screw_axes, thetas[k])
+        q = quaternion_from_matrix(pose)
+        x[k] = pose[0, 3]
+        y[k] = pose[1, 3]
+        z[k] = pose[2, 3]
+        qx[k] = q[0]
+        qy[k] = q[1]
+        qz[k] = q[2]
+        qw[k] = q[3]
+    return x, y, z, qx, qy, qz, qw
+
+
+def panda_jacobian(thetas):
+    """For n sets of thetas, calculate the Jacobian and pseudo-inverse Jacobian
+    matrices for each set of thetas.
+    :param thetas: [n, 7]
+    """
+    l = len(thetas)
+    J_matrices = []
+    J_pinv_matrices = []
+    N_matrices = []
+    for k in range(l):
+        j = jacobian_space(Panda.screw_axes, thetas[k])
+        J_matrices.append(j)
+        j_pinv = np.linalg.pinv(j)
+        J_pinv_matrices.append(j_pinv)
+        N_matrices.append(np.eye(7) - np.dot(j_pinv, j))
+    return np.asarray(J_matrices), np.asarray(J_pinv_matrices), np.asarray(N_matrices)
 
 
 # Planar-N-Link experiment

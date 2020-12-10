@@ -42,7 +42,7 @@ LTS = {
     'max_exploration_gains': [1000, 500, 200, 100, 50],
 
     # each outer iterations consists of 1) sampling, 2) updating the component weights, 3) updating the components
-    'outer_iterations': 50,
+    'outer_iterations': 51,
 
     # defines how often to alternate between 2) and 3) after each sampling step
     'iterations_for_mixture_updates': 1,
