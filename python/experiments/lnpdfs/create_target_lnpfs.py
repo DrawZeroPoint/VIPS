@@ -90,7 +90,9 @@ def build_target_likelihood_panda_arm_xyz(num_dimensions, prior_variance, likeli
     :param prior_variance: ndarray, [n,] variance of the input's Gaussian
     :param likelihood_variance: target distribution variance
     """
-    prior = normal_pdf(np.zeros(num_dimensions), prior_variance * np.eye(num_dimensions))
+    prior_means = np.zeros(num_dimensions)
+    prior_means[3] = -np.pi * 0.5
+    prior = normal_pdf(prior_means, prior_variance * np.eye(num_dimensions))
     prior_chol = np.sqrt(prior_variance) * np.eye(num_dimensions)
     """Dong
     Set positional target (x,y,z), orientation is not cared
@@ -131,7 +133,7 @@ def build_target_likelihood_panda_arm_waiter(num_dimensions, prior_variance, lik
     Set both orientation and position targets, where orientation has the highest priority.
     TCP reach 2 specific positions in demonstration (10 samples for each position)
     """
-    likelihood = normal_pdf([0.5, -0.3, 0.5, 1, 0, 0, 0], likelihood_variance * np.eye(7))
+    likelihood = normal_pdf([1.5, -0.3, 0.5, 0, 0, 0, 1], likelihood_variance * np.eye(7))
 
     def target_lnpdf(theta, without_prior=False):
         theta = np.atleast_2d(theta)
